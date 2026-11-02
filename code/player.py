@@ -1,7 +1,7 @@
 """An idle-animated character controlled with A and D."""
 
 from pathlib import Path
-from pico2d import SDL_KEYDOWN, SDL_KEYUP, SDLK_a, SDLK_d, load_image
+from pico2d import SDL_KEYDOWN, SDL_KEYUP, SDLK_a, SDLK_d, SDLK_q, load_image
 from emote import Emote
 
 
@@ -13,11 +13,15 @@ class Player:
     FRAME_COUNT = COLUMNS * ROWS
     ANIMATION_FPS = 10
     MOVE_SPEED = 240  # pixels per second
+    COLORS = ("gray", "blue", "yellow", "green")
 
     def __init__(self, x, ground_y, screen_width):
-        image_path = (Path(__file__).resolve().parent.parent
-                      / "image" / "character" / "idle" / "idle_blue.png")
-        self.image = load_image(str(image_path))
+        image_dir = (Path(__file__).resolve().parent.parent
+                     / "image" / "character" / "idle")
+        self.images = [load_image(str(image_dir / f"idle_{color}.png"))
+                       for color in self.COLORS]
+        self.color_index = 0
+        self.image = self.images[self.color_index]
         self.x = x
         self.y = ground_y + self.DRAW_SIZE / 2
         self.screen_width = screen_width
@@ -28,9 +32,12 @@ class Player:
 
     def handle_event(self, event):
         self.emote.handle_event(event)
-        if event.type == SDL_KEYDOWN and event.key in (SDLK_a, SDLK_d):
+        if event.type == SDL_KEYDOWN and event.key in (SDLK_a, SDLK_d, SDLK_q):
+            if event.key == SDLK_q and event.key not in self.pressed_keys:
+                self.color_index = (self.color_index + 1) % len(self.COLORS)
+                self.image = self.images[self.color_index]
             self.pressed_keys.add(event.key)
-        elif event.type == SDL_KEYUP and event.key in (SDLK_a, SDLK_d):
+        elif event.type == SDL_KEYUP and event.key in (SDLK_a, SDLK_d, SDLK_q):
             self.pressed_keys.discard(event.key)
 
     def update(self, dt):
